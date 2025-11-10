@@ -1,5 +1,5 @@
 <?php
-// Incluir la conexión a la BD para OBTENER las provincias
+// Conexión a la BD para OBTENER las provincias
 require 'conexion.php';
 
 $mensaje = '';

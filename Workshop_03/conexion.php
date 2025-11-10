@@ -19,4 +19,3 @@ try {
     // Si la conexión falla, detenemos el script con un error claro.
     die("Error de conexión a la base de datos: " . $e->getMessage());
 }
-// ¡Sin etiqueta de cierre ?>!

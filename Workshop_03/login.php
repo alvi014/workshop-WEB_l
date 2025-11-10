@@ -1,14 +1,14 @@
 <?php
-// Inicializamos la variable que contendrá el valor del campo
+// Inicializar la variable que contendrá el valor del campo
 $username_value = '';
 $mensaje_exito = '';
 
-// 1. Verificamos si la URL contiene el parámetro 'username'
+// 1. Verificar si la URL contiene el parámetro 'username'
 if (isset($_GET['username'])) {
-    // 2. Leemos el valor y lo limpiamos para evitar inyecciones HTML (XSS).
+    // 2. Leer el valor y lo limpiamos para evitar inyecciones HTML (XSS).
     $username_value = htmlspecialchars($_GET['username']);
     
-    // Opcional: Mostramos un mensaje de éxito
+   
     $mensaje_exito = '¡Registro exitoso! Ya puedes iniciar sesión con ' . $username_value . '.';
 }
 ?>
