@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+// Rutas a includes: Corregidas
 require '../../includes/db_conexion.php'; 
 require '../../includes/auth_check.php'; 
 
@@ -22,9 +23,10 @@ $nombre_usuario = $_SESSION['nombre_usuario'] ?? 'Pasajero';
 
     <h2>Acciones Rápidas</h2>
     <ul>
-        <li><a href="../../public/buscar_rides.php">🔍 Buscar Rides Disponibles</a></li>
+        <li><a href="../../index.php">🔍 Buscar Rides Disponibles</a></li>
+        
         <li><a href="mis_reservas.php">📋 Mis Solicitudes y Reservas</a></li>
-        <li><a href="editar_perfil.php">✏️ Modificar mis Datos Personales</a></li> 
+        
     </ul>
     
     <hr>

@@ -1,15 +1,20 @@
 <?php
 session_start();
-
+// Rutas corregidas para acceder a includes/
 require '../../includes/db_conexion.php'; 
 require '../../includes/auth_check.php'; 
 
 check_role_access('chofer');
 
 $id_chofer = $_SESSION['id_usuario'];
-$mensaje = '';
-$accion = $_POST['accion'] ?? '';
 $errores = [];
+$mensaje = '';
+
+// ------------------------------------------------------------------
+// CORRECCIÓN: Inicialización de $accion antes de su uso
+// Usamos $_POST['accion'] o una cadena vacía si no existe.
+// ------------------------------------------------------------------
+$accion = $_POST['accion'] ?? ''; 
 
 // Variables para el formulario (usando nombres consistentes con la tabla)
 $nombre_ride = $lugar_salida = $lugar_llegada = $dia_semana = $hora = '';
@@ -20,9 +25,9 @@ $modo_edicion = false;
 
 $dias_semana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-
 // --- 1. CONSULTA: Obtener lista de Vehículos del Chofer ---
 try {
+    // Usamos capacidad_asientos de la tabla Vehiculos
     $stmt = $pdo->prepare("SELECT id_vehiculo, placa, marca, modelo, capacidad_asientos FROM Vehiculos WHERE id_chofer = ? ORDER BY placa");
     $stmt->execute([$id_chofer]);
     $vehiculos_chofer = $stmt->fetchAll();
@@ -38,7 +43,7 @@ try {
 
 // --- 2. Lógica de Procesamiento (CRUD) ---
 if ($accion === 'crear' || $accion === 'editar_guardar') {
-    // Recolección y validación de datos (usando nombres de formulario y tabla)
+    // Recolección de datos
     $nombre_ride = trim($_POST['nombre_ride'] ?? '');
     $lugar_salida = trim($_POST['lugar_salida'] ?? '');
     $lugar_llegada = trim($_POST['lugar_llegada'] ?? '');
@@ -48,18 +53,26 @@ if ($accion === 'crear' || $accion === 'editar_guardar') {
     $espacios_totales = intval($_POST['espacios_totales'] ?? 0);
     $id_vehiculo = intval($_POST['id_vehiculo'] ?? 0);
     $id_ride_editar = $_POST['id_ride'] ?? null;
+    $modo_edicion = ($accion === 'editar_guardar');
     
     
+    // ------------------------------------------------------------------
+    // VALIDACIONES BÁSICAS
+    // ------------------------------------------------------------------
     if (empty($nombre_ride) || empty($lugar_salida) || empty($lugar_llegada) || !in_array($dia_semana, $dias_semana) || empty($hora) || $costo_por_espacio <= 0 || $espacios_totales <= 0 || $id_vehiculo == 0) {
         $errores[] = "Asegúrate de llenar todos los campos y seleccionar un vehículo.";
     }
     
-    // Validación de vehículo pertenencia y capacidad
+    // ------------------------------------------------------------------
+    // VALIDACIÓN DE VEHÍCULO Y CAPACIDAD
+    // ------------------------------------------------------------------
     $vehiculo_valido = false;
+    $capacidad_maxima = 0;
     foreach($vehiculos_chofer as $v) {
         if ($v['id_vehiculo'] == $id_vehiculo) {
-            if ($espacios_totales > $v['capacidad_asientos']) {
-                 $errores[] = "Los espacios solicitados ($espacios_totales) exceden la capacidad del vehículo ({$v['capacidad_asientos']}).";
+            $capacidad_maxima = $v['capacidad_asientos'];
+            if ($espacios_totales > $capacidad_maxima) {
+                 $errores[] = "Los espacios solicitados ($espacios_totales) exceden la capacidad del vehículo ($capacidad_maxima).";
             }
             $vehiculo_valido = true;
             break;
@@ -69,40 +82,81 @@ if ($accion === 'crear' || $accion === 'editar_guardar') {
         $errores[] = "El vehículo seleccionado no es válido o no existe.";
     }
 
+    // ------------------------------------------------------------------
+    // 🛡️ VALIDACIÓN DE SOLAPAMIENTO (BUG CRÍTICO CORREGIDO)
+    // ------------------------------------------------------------------
+    if (empty($errores)) {
+        // La consulta excluye el ride actual si estamos en modo edición
+        $sql_check_solapamiento = "SELECT id_ride FROM Rides 
+                                  WHERE id_vehiculo = ? 
+                                  AND dia_semana = ? 
+                                  AND hora = ?" . 
+                                  ($modo_edicion ? " AND id_ride != ?" : "");
+        
+        $stmt_check = $pdo->prepare($sql_check_solapamiento);
+        
+        $params = [$id_vehiculo, $dia_semana, $hora];
+        if ($modo_edicion) {
+            $params[] = $id_ride_editar;
+        }
+
+        $stmt_check->execute($params);
+
+        if ($stmt_check->rowCount() > 0) {
+            $errores[] = "¡Conflicto de Horario! Este vehículo ya tiene un Ride agendado para el **{$dia_semana}** a las **{$hora}**.";
+        }
+    }
+    // ------------------------------------------------------------------
+    
     if (empty($errores)) {
         if ($accion === 'crear') {
-            
-            // INSERT: Uso de nombre_ride, dia_semana, costo_por_espacio, espacios_totales
+            // INSERT: Se usa $espacios_totales como espacios_disponibles al crear.
             $sql = "INSERT INTO Rides (id_chofer, id_vehiculo, nombre_ride, lugar_salida, lugar_llegada, dia_semana, hora, costo_por_espacio, espacios_totales, espacios_disponibles) 
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             try {
                 $stmt = $pdo->prepare($sql);
-                // NOTA: Se usan los espacios_totales como espacios_disponibles al crear.
                 $stmt->execute([$id_chofer, $id_vehiculo, $nombre_ride, $lugar_salida, $lugar_llegada, $dia_semana, $hora, $costo_por_espacio, $espacios_totales, $espacios_totales]);
                 $mensaje = "¡Ride **" . htmlspecialchars($nombre_ride) . "** registrado exitosamente!";
             } catch (\PDOException $e) {
                 $errores[] = "Error al crear el Ride: " . $e->getMessage();
             }
         } elseif ($accion === 'editar_guardar' && $id_ride_editar) {
+            // Lógica de Edición - Manejo de la reducción de capacidad
             
-      
-            $sql = "UPDATE Rides SET 
-                        id_vehiculo = ?, nombre_ride = ?, lugar_salida = ?, lugar_llegada = ?, 
-                        dia_semana = ?, hora = ?, costo_por_espacio = ?, espacios_totales = ?, espacios_disponibles = ?
-                    WHERE id_ride = ? AND id_chofer = ?";
+            // 1. Obtener los espacios que ya estaban reservados para mantenerlos
+            $stmt_res = $pdo->prepare("SELECT espacios_totales, (espacios_totales - espacios_disponibles) AS ocupados FROM Rides WHERE id_ride = ?");
+            $stmt_res->execute([$id_ride_editar]);
+            $ride_actual = $stmt_res->fetch();
+            $espacios_ocupados = $ride_actual['ocupados'] ?? 0;
             
-            try {
-                $stmt = $pdo->prepare($sql);
+            if ($espacios_totales < $espacios_ocupados) {
+                $errores[] = "No se puede reducir la capacidad a $espacios_totales porque ya hay $espacios_ocupados espacios reservados.";
+            } else {
+                // 2. Calcular nuevos espacios disponibles
+                $nuevos_disponibles = $espacios_totales - $espacios_ocupados;
                 
-                $stmt->execute([$id_vehiculo, $nombre_ride, $lugar_salida, $lugar_llegada, $dia_semana, $hora, $costo_por_espacio, $espacios_totales, $espacios_totales, $id_ride_editar, $id_chofer]);
-                
-                $mensaje = "¡Ride **" . htmlspecialchars($nombre_ride) . "** actualizado exitosamente!";
-            } catch (\PDOException $e) {
-                $errores[] = "Error al actualizar el Ride: " . $e->getMessage();
+                // 3. Ejecutar UPDATE
+                $sql = "UPDATE Rides SET 
+                            id_vehiculo = ?, nombre_ride = ?, lugar_salida = ?, lugar_llegada = ?, 
+                            dia_semana = ?, hora = ?, costo_por_espacio = ?, espacios_totales = ?, espacios_disponibles = ?
+                        WHERE id_ride = ? AND id_chofer = ?";
+                try {
+                    $stmt = $pdo->prepare($sql);
+                    
+                    $stmt->execute([$id_vehiculo, $nombre_ride, $lugar_salida, $lugar_llegada, $dia_semana, $hora, $costo_por_espacio, $espacios_totales, $nuevos_disponibles, $id_ride_editar, $id_chofer]);
+                    
+                    $mensaje = "¡Ride **" . htmlspecialchars($nombre_ride) . "** actualizado exitosamente!";
+                } catch (\PDOException $e) {
+                    $errores[] = "Error al actualizar el Ride: " . $e->getMessage();
+                }
             }
         }
-        header("Location: crear_ride.php");
-        exit();
+        
+        // Solo redirigir si no hubo errores durante el INSERT/UPDATE (e.g., el error de capacidad)
+        if (empty($errores)) {
+            header("Location: crear_ride.php");
+            exit();
+        }
     }
 }
 
@@ -110,7 +164,6 @@ if ($accion === 'crear' || $accion === 'editar_guardar') {
 if (isset($_GET['action']) && $_GET['action'] == 'edit') {
     $id_ride_editar = intval($_GET['id'] ?? 0);
     if ($id_ride_editar > 0) {
-        // CORRECCIÓN SELECT: Usando nombres correctos de columna
         $sql = "SELECT id_ride, nombre_ride, lugar_salida, lugar_llegada, dia_semana, hora, costo_por_espacio, espacios_totales, id_vehiculo FROM Rides WHERE id_ride = ? AND id_chofer = ?";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$id_ride_editar, $id_chofer]);
@@ -138,7 +191,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete') {
     $id_ride = intval($_GET['id'] ?? 0);
     if ($id_ride > 0) {
         try {
-            // Se verifica que el ride pertenezca al chofer logueado y se elimina
+            // Se asume que la DB está configurada con CASCADE DELETE para Reservas
             $sql = "DELETE FROM Rides WHERE id_ride = ? AND id_chofer = ?";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([$id_ride, $id_chofer]);
@@ -163,7 +216,7 @@ try {
                   FROM Rides R 
                   JOIN Vehiculos V ON R.id_vehiculo = V.id_vehiculo
                   WHERE R.id_chofer = ?
-                  ORDER BY R.dia_semana, R.hora"; 
+                  ORDER BY FIELD(R.dia_semana, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'), R.hora"; 
     $stmt_rides = $pdo->prepare($sql_rides);
     $stmt_rides->execute([$id_chofer]);
     $rides = $stmt_rides->fetchAll();
@@ -197,7 +250,7 @@ try {
         </div>
     <?php endif; ?>
 
-    <h2><?= $modo_edicion ? 'Editar Ride' : 'Crear Nuevo Ride' ?></h2>
+    <h2><?= $modo_edicion ? 'Editar Ride (ID: ' . $id_ride_editar . ')' : 'Crear Nuevo Ride' ?></h2>
     
     <form method="POST" action="crear_ride.php">
         <input type="hidden" name="accion" value="<?= $modo_edicion ? 'editar_guardar' : 'crear' ?>">
@@ -211,7 +264,8 @@ try {
             <option value="">-- Seleccione un Vehículo --</option>
             <?php foreach ($vehiculos_chofer as $v): ?>
                 <option value="<?= htmlspecialchars($v['id_vehiculo']) ?>" 
-                        <?= ($id_vehiculo == $v['id_vehiculo']) ? 'selected' : '' ?>>
+                        <?= ($id_vehiculo == $v['id_vehiculo']) ? 'selected' : '' ?>
+                        data-capacidad="<?= htmlspecialchars($v['capacidad_asientos']) ?>">
                     <?= htmlspecialchars($v['placa']) ?> (<?= htmlspecialchars($v['modelo']) ?> / Cap: <?= htmlspecialchars($v['capacidad_asientos']) ?>)
                 </option>
             <?php endforeach; ?>
@@ -240,7 +294,7 @@ try {
         <input type="number" step="0.01" id="costo_por_espacio" name="costo_por_espacio" value="<?= htmlspecialchars($costo_por_espacio) ?>" min="0.01" required><br><br>
 
         <label for="espacios_totales">Espacios Totales:</label>
-        <input type="number" id="espacios_totales" name="espacios_totales" value="<?= htmlspecialchars($espacios_totales) ?>" min="1" max="8" required><br><br>
+        <input type="number" id="espacios_totales" name="espacios_totales" value="<?= htmlspecialchars($espacios_totales) ?>" min="1" required><br><br>
 
         <button type="submit"><?= $modo_edicion ? 'Guardar Cambios' : 'Registrar Ride' ?></button>
     </form>
@@ -259,6 +313,7 @@ try {
                     <th>Ruta</th>
                     <th>Día y Hora</th>
                     <th>Costo</th>
+                    <th>Capacidad</th>
                     <th>Espacios Disp.</th>
                     <th>Vehículo</th>
                     <th>Acciones</th>
@@ -271,6 +326,7 @@ try {
                     <td><?= htmlspecialchars($r['lugar_salida']) ?> → <?= htmlspecialchars($r['lugar_llegada']) ?></td>
                     <td><?= htmlspecialchars($r['dia_semana']) ?> a las <?= htmlspecialchars($r['hora']) ?></td>
                     <td>₡<?= number_format($r['costo_por_espacio'], 2) ?></td>
+                    <td><?= htmlspecialchars($r['espacios_totales']) ?></td>
                     <td><?= htmlspecialchars($r['espacios_disponibles']) ?></td>
                     <td><?= htmlspecialchars($r['modelo']) ?> (<?= htmlspecialchars($r['placa']) ?>)</td>
                     <td>
@@ -282,6 +338,5 @@ try {
             </tbody>
         </table>
     <?php endif; ?>
-
 </body>
 </html>

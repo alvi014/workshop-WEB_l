@@ -57,8 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             exit();
                         default:
                             $errores[] = "Tipo de usuario no reconocido. Contacte al administrador.";
-                            // Si el tipo de usuario es desconocido, mejor enviarlo al login.
-                            // Aquí se podría considerar destruir la sesión y redirigir al login.
+                        
                     }
                     // ----------------------------------------
                 }
@@ -78,7 +77,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Iniciar Sesión - Aventones</title>
 </head>
 <body>
-    <h1>🔑 Iniciar Sesión</h1>
+    <h1> Iniciar Sesión</h1>
 
     <?php if (!empty($errores)): ?>
         <div style="color: red; border: 1px solid red; padding: 10px; margin-bottom: 20px;">

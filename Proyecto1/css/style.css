@@ -1,0 +1,350 @@
+
+
+
+/* ========================================= */
+/* AJUSTES PROFESIONALES DEL HEADER */
+/* ========================================= */
+
+.main-header {
+    /* Mantenemos el fondo blanco y la sombra */
+    background-color: var(--color-fondo-card); 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Sombra más definida */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 40px;
+}
+
+.logo a {
+    text-decoration: none;
+}
+
+.main-nav ul {
+    /* Aseguramos que los elementos estén alineados */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 15px; /* Espaciado entre elementos de navegación */
+    align-items: center; /* Centrar verticalmente los botones/enlaces */
+}
+
+/* Estilo Base para Enlaces (no-botón) */
+.main-nav a {
+    text-decoration: none;
+    color: var(--color-texto-oscuro);
+    padding: 8px 0; /* Solo padding vertical */
+    transition: color 0.2s ease-in-out;
+}
+.main-nav a:hover {
+    color: var(--color-primario);
+}
+
+/* Estilo para los Botones en el Header (.btn-logout y .btn-registro) */
+.main-nav .btn {
+    /* El .btn ya tiene padding de tus reglas anteriores */
+    padding: 8px 15px; 
+    text-decoration: none;
+    font-weight: 600;
+    border-radius: 5px; /* Bordes ligeramente más cuadrados para look profesional */
+}
+
+/* Botón de Registro/Acción Principal */
+.btn-registro {
+    background-color: var(--color-secundario); /* Naranja vibrante */
+    color: white !important;
+    border: 1px solid var(--color-secundario);
+}
+.btn-registro:hover {
+    background-color: #e68e00; /* Naranja más oscuro al pasar el mouse */
+    border-color: #e68e00;
+}
+
+/* Botón de Cerrar Sesión (look secundario/ghost) */
+.btn-logout {
+    background-color: transparent;
+    color: var(--color-texto-oscuro) !important;
+    border: 1px solid var(--color-borde);
+}
+.btn-logout:hover {
+    background-color: var(--color-fondo);
+    color: var(--color-primario) !important;
+}
+
+
+/* ========================================= */
+/* 1. Variables Globales y Reset (Evitar Look Genérico) */
+/* ========================================= */
+:root {
+    --color-primario: #008f8c; /* Turquesa Oscuro - Color de Marca */
+    --color-secundario: #ff9f1c; /* Naranja Vibrante - Acentos/Llamada a la acción */
+    --color-fondo: #f4f7f6; /* Fondo Ligeramente Gris */
+    --color-fondo-card: #ffffff; /* Fondo Blanco para Tarjetas */
+    --color-texto-oscuro: #333333;
+    --color-borde: #dddddd;
+    
+    --fuente-principal: 'Arial', sans-serif;
+    --fuente-titulo: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--fuente-principal);
+    background-color: var(--color-fondo);
+    color: var(--color-texto-oscuro);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ========================================= */
+/* 2. Estilos del Header y Footer (Del header.php/footer.php) */
+/* ========================================= */
+
+.main-header {
+    background-color: var(--color-fondo-card);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 40px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo-text {
+    font-family: var(--fuente-titulo);
+    font-size: 1.6em;
+    font-weight: 700;
+    color: var(--color-primario);
+    text-decoration: none;
+}
+
+.main-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 15px;
+}
+
+.main-nav a {
+    text-decoration: none;
+    color: var(--color-texto-oscuro);
+    padding: 8px 10px;
+    border-radius: 4px;
+    transition: color 0.3s;
+}
+
+.main-nav a:hover {
+    color: var(--color-primario);
+}
+
+.main-content-container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.main-footer {
+    background-color: #333;
+    color: white;
+    padding: 20px 0;
+    margin-top: 40px;
+}
+.footer-content {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.footer-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+}
+.footer-nav a {
+    color: #ccc;
+    text-decoration: none;
+}
+.footer-nav a:hover {
+    color: var(--color-secundario);
+}
+
+
+/* ========================================= */
+/* 3. Estilos de Componentes (Botones, Tarjetas, Alertas) */
+/* ========================================= */
+
+h1.page-title {
+    font-family: var(--fuente-titulo);
+    color: var(--color-primario);
+    border-bottom: 2px solid var(--color-secundario);
+    padding-bottom: 10px;
+    margin-bottom: 30px;
+}
+
+.card {
+    background-color: var(--color-fondo-card);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 25px;
+    margin-bottom: 30px;
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+.alert-error {
+    background-color: #fcebeb;
+    color: #cc0000;
+    border: 1px solid #cc0000;
+}
+
+/* Botones */
+.btn {
+    padding: 10px 18px;
+    text-decoration: none;
+    border-radius: 50px; /* Botones más redondeados */
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-block;
+    transition: background-color 0.3s;
+    border: none;
+}
+.btn-primary {
+    background-color: var(--color-primario);
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #006b69; /* Tono más oscuro */
+}
+.btn-secondary {
+    background-color: #e0e0e0;
+    color: var(--color-texto-oscuro);
+}
+.btn-secondary:hover {
+    background-color: #ccc;
+}
+.btn-success {
+    background-color: #4CAF50;
+    color: white;
+}
+.btn-warning {
+    background-color: var(--color-secundario);
+    color: var(--color-texto-oscuro); /* Color oscuro para contraste en naranja */
+}
+
+
+/* ========================================= */
+/* 4. Estilos de la Búsqueda y Filtro */
+/* ========================================= */
+
+.search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+}
+.input-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+}
+.input-group label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+}
+
+.input-text, .input-select {
+    padding: 10px;
+    border: 1px solid var(--color-borde);
+    border-radius: 5px;
+    font-size: 1em;
+    min-height: 40px;
+}
+.form-actions {
+    display: flex;
+    gap: 10px;
+}
+
+
+/* ========================================= */
+/* 5. Estilos de la Lista de Rides (Tarjetas) */
+/* ========================================= */
+
+.ride-list {
+    display: grid;
+    /* Grid de 1 columna, cambia a 2 o 3 en pantallas grandes con media query */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.ride-card {
+    background-color: var(--color-fondo-card);
+    border-left: 5px solid var(--color-primario); /* Borde de acento */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s;
+}
+.ride-card:hover {
+    transform: translateY(-5px); /* Pequeño efecto al pasar el mouse */
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.ride-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--color-borde);
+}
+.ride-route {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: var(--color-texto-oscuro);
+    display: block;
+}
+.arrow {
+    color: var(--color-primario);
+    padding: 0 5px;
+}
+
+.ride-details p {
+    margin: 5px 0;
+    font-size: 0.95em;
+}
+
+.car-info {
+    color: #666;
+    font-style: italic;
+}
+
+.price {
+    font-size: 1.1em;
+    color: var(--color-secundario);
+    font-weight: bold;
+    margin-top: 10px;
+}
+.spaces-left {
+    color: #d9534f; /* Color de alerta para disponibilidad */
+    font-weight: 700;
+}
+
+.ride-actions {
+    margin-top: 20px;
+    text-align: right;
+}

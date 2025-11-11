@@ -100,7 +100,7 @@ try {
     <title>Gestión de Reservas</title>
 </head>
 <body>
-    <h1>📋 Solicitudes de Reserva</h1>
+    <h1>Solicitudes de Reserva</h1>
     <p><a href="chofer_panel.php">← Volver al Panel</a></p>
 
     <?php if (!empty($errores)): ?>
