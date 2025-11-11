@@ -28,6 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($usuario) {
             // Asegúrate de que la función check_password esté definida en utils.php
             // Asumo que tienes una función para verificar contraseñas hasheadas (e.g., password_verify)
+            // NOTA: Si check_password usa password_verify, es correcto.
             $contrasena_correcta = check_password($contrasena, $usuario['contrasena_hash']);
 
             if ($contrasena_correcta) {
@@ -41,23 +42,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
                     $_SESSION['nombre_usuario'] = $usuario['nombre'];
                     
-                    // --- LÓGICA DE REDIRECCIÓN CORREGIDA ---
+                    // --- LÓGICA DE REDIRECCIÓN CORREGIDA (Pasajero redirige a su Panel) ---
                     switch ($usuario['tipo_usuario']) {
                         case 'chofer':
                             // Chofer va a su panel
                             header("Location: ../views/chofer/chofer_panel.php");
                             exit();
                         case 'pasajero':
-                            // Pasajero va a la página principal de búsqueda (index.php, un nivel arriba)
-                            header("Location: ../index.php");
+                            // CORRECCIÓN: Pasajero va a su panel de control
+                            header("Location: ../views/pasajero/pasajero_panel.php");
                             exit();
                         case 'administrador':
                             // Administrador va a su panel
                             header("Location: ../views/admin/admin_panel.php");
                             exit();
                         default:
+                            // En caso de un tipo no reconocido, vuelve a la página principal con error.
                             $errores[] = "Tipo de usuario no reconocido. Contacte al administrador.";
-                        
+                            header("Location: ../index.php"); 
+                            exit();
                     }
                     // ----------------------------------------
                 }
@@ -74,34 +77,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Aventones</title>
+    <!-- Asumo que usarás Bootstrap o similar para el diseño -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 </head>
-<body>
-    <h1> Iniciar Sesión</h1>
+<body class="bg-light">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="card p-4 shadow-sm" style="max-width: 400px; width: 100%;">
+            <h1 class="card-title text-center mb-4">Iniciar Sesión</h1>
 
-    <?php if (!empty($errores)): ?>
-        <div style="color: red; border: 1px solid red; padding: 10px; margin-bottom: 20px;">
-            <p><strong>Errores:</strong></p>
-            <ul>
-                <?php foreach ($errores as $error): ?>
-                    <li><?= htmlspecialchars($error) ?></li>
-                <?php endforeach; ?>
-            </ul>
+            <?php if (!empty($errores)): ?>
+                <div class="alert alert-danger" role="alert">
+                    <p class="mb-0"><strong>Error:</strong></p>
+                    <ul class="mb-0">
+                        <?php foreach ($errores as $error): ?>
+                            <li><?= htmlspecialchars($error) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" action="login.php">
+                <div class="mb-3">
+                    <label for="correo_electronico" class="form-label">Correo Electrónico:</label>
+                    <input type="email" id="correo_electronico" name="correo_electronico" value="<?= htmlspecialchars($correo) ?>" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="contrasena" class="form-label">Contraseña:</label>
+                    <input type="password" id="contrasena" name="contrasena" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary w-100 mb-3">Ingresar</button>
+            </form>
+
+            <p class="text-center mt-3">
+                ¿No tienes cuenta? <a href="registro_pasajero.php">Regístrate como Pasajero</a>
+            </p>
+            <p class="text-center">
+                ¿Quieres ofrecer rides? <a href="registro_chofer.php">Regístrate como Chofer</a>
+            </p>
         </div>
-    <?php endif; ?>
-
-    <form method="POST" action="login.php">
-        <label for="correo_electronico">Correo Electrónico:</label>
-        <input type="email" id="correo_electronico" name="correo_electronico" value="<?= htmlspecialchars($correo) ?>" required><br><br>
-
-        <label for="contrasena">Contraseña:</label>
-        <input type="password" id="contrasena" name="contrasena" required><br><br>
-        
-        <button type="submit">Ingresar</button>
-    </form>
-
-    <p>¿No tienes cuenta? <a href="registro_pasajero.php">Regístrate como Pasajero</a></p>
-    <p>¿Quieres ofrecer rides? <a href="registro_chofer.php">Regístrate como Chofer</a></p>
-
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
 </body>
 </html>
